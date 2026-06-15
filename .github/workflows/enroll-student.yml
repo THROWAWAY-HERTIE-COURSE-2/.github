@@ -8,7 +8,7 @@ on:
         required: true
         type: choice
         options:
-          - (none-yet)
+          - THROWAWAY-HERTIE-F2026
       handle:
         description: "GitHub handle to enroll (blank = sync whole roster)"
         required: false
