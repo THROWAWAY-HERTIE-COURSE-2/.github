@@ -1,0 +1,94 @@
+name: Release materials
+
+on:
+  workflow_dispatch:
+    inputs:
+      source_repo:
+        description: "Source materials repo (in this course org)"
+        required: true
+        type: choice
+        options:
+          - (none-yet)
+      cohort_org:
+        description: "Target cohort org"
+        required: true
+        type: choice
+        options:
+          - (none-yet)
+      cohort_repo:
+        description: "Target repo in the cohort org"
+        required: true
+        type: choice
+        options:
+          - materials
+      week:
+        description: "Week number (e.g. 1)"
+        required: true
+      include_lectures:
+        description: "Include lectures"
+        type: boolean
+        default: true
+      include_readings:
+        description: "Include readings"
+        type: boolean
+        default: true
+      include_syllabus:
+        description: "Also release the syllabus (root *syllabus* files) - overwrites"
+        type: boolean
+        default: false
+      include_readme:
+        description: "Also release the source README to the cohort root - overwrites"
+        type: boolean
+        default: false
+
+jobs:
+  check-team:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify the user may run actions for THIS repo
+        env:
+          GH_TOKEN: ${{ secrets.DSL_BOT_TOKEN }}
+          ACTOR: ${{ github.actor }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Faculty have write+ on the course repos; students never do (and triggering a
+          # workflow_dispatch already requires write), so repo permission is the gate.
+          perm=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq '.permission' 2>/tmp/gherr || true)
+          case "$perm" in admin|write|maintain) exit 0 ;; esac
+          echo "::error::@$ACTOR lacks write on $REPO (permission='$perm'). gh api said:"
+          cat /tmp/gherr || true
+          exit 1
+
+  release:
+    needs: check-team
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: hertie-data-science-lab/dsl-teaching-course-setup
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Release
+        env:
+          GH_TOKEN: ${{ secrets.DSL_BOT_TOKEN }}
+          SRC_ORG: ${{ github.repository_owner }}
+          SRC_REPO: ${{ inputs.source_repo }}
+          COHORT_ORG: ${{ inputs.cohort_org }}
+          COHORT_REPO: ${{ inputs.cohort_repo }}
+          WEEK: ${{ inputs.week }}
+          INC_LEC: ${{ inputs.include_lectures }}
+          INC_READ: ${{ inputs.include_readings }}
+          INC_SYL: ${{ inputs.include_syllabus }}
+          INC_RM: ${{ inputs.include_readme }}
+        run: |
+          gh auth setup-git
+          args=(--source-org "$SRC_ORG" --source-repo "$SRC_REPO"
+                --cohort-org "$COHORT_ORG" --cohort-repo "$COHORT_REPO" --week "$WEEK")
+          [ "$INC_LEC" = "false" ] && args+=(--no-lectures)
+          [ "$INC_READ" = "false" ] && args+=(--no-readings)
+          [ "$INC_SYL" = "true" ] && args+=(--syllabus)
+          [ "$INC_RM" = "true" ] && args+=(--readme)
+          python3 -m dsl_course.release "${args[@]}"
