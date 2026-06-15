@@ -8,7 +8,7 @@ _This page is auto-generated; edits will be overwritten on the next refresh._
 List of cohort orgs registered to receive releases from this course org. _Auto-discovered from the
 `cohort-courses-pages.yml` registry_:
 
-_(none registered yet - run Bootstrap cohort)_
+- [THROWAWAY-HERTIE-F2026](https://github.com/THROWAWAY-HERTIE-F2026)
 
 ## Repositories
 
