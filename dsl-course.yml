@@ -1,0 +1,35 @@
+org: THROWAWAY-HERTIE-COURSE-2
+org_name: THROWAWAY-HERTIE-COURSE-2
+course_name: THROWAWAY-HERTIE-COURSE-2
+course_code: 
+
+# People shown on the cohort website. Declared here so cards carry institutional
+# headshots + bio links (not GitHub avatars). The first instructor is featured.
+# photo = image URL, url = bio/profile link, title = optional role. Uncomment:
+#
+# people:
+#   instructors:
+#     - name: "Prof. Jane Doe"
+#       title: "Professor of ..."
+#       photo: "https://.../jane.jpg"
+#       url: "https://.../profile/jane"
+#   teaching_assistants:
+#     - name: "A. N. Other"
+#       photo: "https://.../other.jpg"
+#       url: "https://.../profile/other"
+
+# Optional schedule overrides for the cohort website. Edit here (GitHub web UI
+# is fine - no CLI) then run Sync site. Anything you leave out is synthesised
+# (semester start from the cohort's fYYYY tag; assignments every 2 weeks; exams
+# at weeks 8 and 15). Uncomment and fill what you want to pin:
+#
+# schedule:
+#   semester_start: 2026-09-07        # YYYY-MM-DD
+#   assignments:                      # keyed by assignment slug (no -fYYYY)
+#     assignment-1: 2026-10-13
+#     assignment-2: 2026-11-10
+#   exams:
+#     - name: MidTerm Exam
+#       date: 2026-11-03
+#     - name: Final Exam
+#       date: 2026-12-15
