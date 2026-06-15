@@ -14,7 +14,7 @@ on:
         required: true
         type: choice
         options:
-          - (none-yet)
+          - THROWAWAY-HERTIE-F2026
       cohort_repo:
         description: "Target repo in the cohort org"
         required: true
