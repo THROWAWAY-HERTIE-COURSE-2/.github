@@ -8,7 +8,7 @@ on:
         required: true
         type: choice
         options:
-          - (none-yet)
+          - THROWAWAY-HERTIE-F2026
 
 jobs:
   check-team:
