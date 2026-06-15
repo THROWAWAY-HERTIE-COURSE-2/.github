@@ -1,0 +1,71 @@
+name: Release assignment
+
+# Generates one private repo per onboarded student from the chosen assignment template
+# repo (native template-generate). The assignment dropdown lists the course org's
+# assignment-* template repos; refresh repopulates it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      cohort_org:
+        description: "Target cohort org"
+        required: true
+        type: choice
+        options:
+          - (none-yet)
+      assignment:
+        description: "Assignment template repo (e.g. assignment-1-f2026)"
+        required: true
+      include_solution:
+        description: "Also push the solution (from the template's solution branch) into each student repo"
+        type: boolean
+        default: false
+      dry_run:
+        description: "Preview only - list the repos that WOULD be created, don't create them"
+        type: boolean
+        default: false
+
+jobs:
+  check-team:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Verify the user may run actions for THIS repo
+        env:
+          GH_TOKEN: ${{ secrets.DSL_BOT_TOKEN }}
+          ACTOR: ${{ github.actor }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Faculty have write+ on the course repos; students never do (and triggering a
+          # workflow_dispatch already requires write), so repo permission is the gate.
+          perm=$(gh api "repos/$REPO/collaborators/$ACTOR/permission" --jq '.permission' 2>/tmp/gherr || true)
+          case "$perm" in admin|write|maintain) exit 0 ;; esac
+          echo "::error::@$ACTOR lacks write on $REPO (permission='$perm'). gh api said:"
+          cat /tmp/gherr || true
+          exit 1
+
+  provision:
+    needs: check-team
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: hertie-data-science-lab/dsl-teaching-course-setup
+          ref: main
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -r requirements.txt
+      - name: Provision
+        env:
+          GH_TOKEN: ${{ secrets.DSL_BOT_TOKEN }}
+          MASTER_ORG: ${{ github.repository_owner }}
+          COHORT_ORG: ${{ inputs.cohort_org }}
+          TEMPLATE: ${{ inputs.assignment }}
+          INC_SOL: ${{ inputs.include_solution }}
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          gh auth setup-git
+          args=(--master-org "$MASTER_ORG" --template "$TEMPLATE" --cohort-org "$COHORT_ORG")
+          [ "$INC_SOL" = "true" ] && args+=(--solution)
+          [ "$DRY_RUN" = "true" ] && args+=(--dry-run)
+          python3 -m dsl_course.assign "${args[@]}"
